@@ -1,0 +1,569 @@
+{
+  "manifest_schema_version": 3,
+  "sdk_version": "5.9.6",
+  "app_id": "gsc-connector",
+  "version": "0.1.0",
+  "name": "Google Search Console",
+  "description": "Connect your own Google account to see your Search Console properties and their real Google Search performance — top queries, impressions, clicks and average position, straight from Google.",
+  "icon": "icon.svg",
+  "actions_explicit": true,
+  "system": false,
+  "capabilities": [
+    "store:read",
+    "store:write",
+    "secrets:read"
+  ],
+  "tools": [
+    {
+      "name": "skeleton_refresh_gsc_config",
+      "description": "Google Search Console connection status — whether the user has connected a Google account",
+      "scopes": [],
+      "parameters": {}
+    },
+    {
+      "name": "skeleton_refresh_gsc_sites",
+      "description": "The user's Search Console properties — site URL and permission level (up to 5 shown)",
+      "scopes": [],
+      "parameters": {}
+    },
+    {
+      "name": "connect_gsc",
+      "description": "Start Google Search Console OAuth — returns an authorisation URL to open in the browser (read-only Search Console access). Connecting again adds another Google account, each seeing its own sites.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {},
+        "title": "EmptyParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "auth_url": {
+            "default": "",
+            "title": "Auth Url",
+            "type": "string"
+          },
+          "instruction": {
+            "default": "",
+            "title": "Instruction",
+            "type": "string"
+          }
+        },
+        "title": "ConnectResult",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_gsc_chat"
+    },
+    {
+      "name": "connection_status",
+      "description": "Whether a Google account is connected to Search Console, how many accounts, and how many sites the active account can see.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {},
+        "title": "EmptyParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "connected": {
+            "default": false,
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "sites_count": {
+            "default": 0,
+            "title": "Sites Count",
+            "type": "integer"
+          },
+          "accounts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Accounts",
+            "type": "array"
+          }
+        },
+        "title": "ConnectionStatus",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_gsc_chat"
+    },
+    {
+      "name": "list_accounts",
+      "description": "List the Google accounts connected to Search Console — each account's email and which one is active.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {},
+        "title": "EmptyParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "AccountRecord": {
+            "properties": {
+              "email": {
+                "default": "",
+                "title": "Email",
+                "type": "string"
+              },
+              "is_active": {
+                "default": false,
+                "title": "Is Active",
+                "type": "boolean"
+              }
+            },
+            "title": "AccountRecord",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/$defs/AccountRecord"
+            },
+            "title": "Accounts",
+            "type": "array"
+          },
+          "count": {
+            "default": 0,
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "title": "AccountsList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_gsc_chat"
+    },
+    {
+      "name": "switch_account",
+      "description": "Change the active Google account. Subsequent site and query lookups use this account until switched again.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "update:account"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "account": {
+            "default": "",
+            "description": "Connected Google account email (from list_accounts); defaults to the active one",
+            "title": "Account",
+            "type": "string"
+          }
+        },
+        "title": "AccountParam",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "active": {
+            "default": "",
+            "title": "Active",
+            "type": "string"
+          }
+        },
+        "title": "AccountSwitched",
+        "type": "object"
+      },
+      "event": "account.switched",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_gsc_chat"
+    },
+    {
+      "name": "disconnect_account",
+      "description": "Disconnect a Google account from Search Console. Nothing in Google is changed; the OAuth grant itself can be fully revoked at myaccount.google.com/permissions.",
+      "action_type": "destructive",
+      "chain_callable": true,
+      "effects": [
+        "delete:account"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "account": {
+            "default": "",
+            "description": "Connected Google account email (from list_accounts); defaults to the active one",
+            "title": "Account",
+            "type": "string"
+          }
+        },
+        "title": "AccountParam",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "email": {
+            "default": "",
+            "title": "Email",
+            "type": "string"
+          },
+          "remaining": {
+            "default": 0,
+            "title": "Remaining",
+            "type": "integer"
+          }
+        },
+        "title": "AccountDisconnected",
+        "type": "object"
+      },
+      "event": "account.disconnected",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_gsc_chat"
+    },
+    {
+      "name": "list_sites",
+      "description": "List the Search Console properties (verified sites) the connected Google account can access — site URL and permission level. Connect first with connect_gsc.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {},
+        "title": "EmptyParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "SiteRecord": {
+            "properties": {
+              "site_url": {
+                "default": "",
+                "title": "Site Url",
+                "type": "string"
+              },
+              "permission_level": {
+                "default": "",
+                "title": "Permission Level",
+                "type": "string"
+              }
+            },
+            "title": "SiteRecord",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "sites": {
+            "items": {
+              "$ref": "#/$defs/SiteRecord"
+            },
+            "title": "Sites",
+            "type": "array"
+          },
+          "count": {
+            "default": 0,
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "title": "SiteList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_gsc_chat"
+    },
+    {
+      "name": "top_queries",
+      "description": "The connected site's best-performing Google search queries over the last N days (default 28) — query, clicks, impressions, CTR %, average position. Connect first with connect_gsc.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "site_url": {
+            "description": "A GSC property from list_sites, e.g. 'https://example.com/' or 'sc-domain:example.com'",
+            "title": "Site Url",
+            "type": "string"
+          },
+          "days": {
+            "default": 28,
+            "description": "Look-back window in days (GSC keeps ~16 months)",
+            "maximum": 480,
+            "minimum": 1,
+            "title": "Days",
+            "type": "integer"
+          },
+          "limit": {
+            "default": 25,
+            "description": "Max query rows to return",
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "site_url"
+        ],
+        "title": "QueryParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "QueryRow": {
+            "properties": {
+              "query": {
+                "default": "",
+                "title": "Query",
+                "type": "string"
+              },
+              "clicks": {
+                "default": 0,
+                "title": "Clicks",
+                "type": "integer"
+              },
+              "impressions": {
+                "default": 0,
+                "title": "Impressions",
+                "type": "integer"
+              },
+              "ctr": {
+                "default": 0.0,
+                "title": "Ctr",
+                "type": "number"
+              },
+              "position": {
+                "default": 0.0,
+                "title": "Position",
+                "type": "number"
+              }
+            },
+            "title": "QueryRow",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "site_url": {
+            "default": "",
+            "title": "Site Url",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/$defs/QueryRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "count": {
+            "default": 0,
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "title": "QueryList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_gsc_chat"
+    },
+    {
+      "name": "striking_distance",
+      "description": "'Almost ranking' queries for the connected site — where it ranks position 5-20 with real impressions (last N days, default 28), sorted by impressions. These are the best article/optimisation opportunities. Connect first with connect_gsc.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "site_url": {
+            "description": "A GSC property from list_sites, e.g. 'https://example.com/' or 'sc-domain:example.com'",
+            "title": "Site Url",
+            "type": "string"
+          },
+          "days": {
+            "default": 28,
+            "description": "Look-back window in days (GSC keeps ~16 months)",
+            "maximum": 480,
+            "minimum": 1,
+            "title": "Days",
+            "type": "integer"
+          },
+          "limit": {
+            "default": 25,
+            "description": "Max query rows to return",
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "site_url"
+        ],
+        "title": "QueryParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "QueryRow": {
+            "properties": {
+              "query": {
+                "default": "",
+                "title": "Query",
+                "type": "string"
+              },
+              "clicks": {
+                "default": 0,
+                "title": "Clicks",
+                "type": "integer"
+              },
+              "impressions": {
+                "default": 0,
+                "title": "Impressions",
+                "type": "integer"
+              },
+              "ctr": {
+                "default": 0.0,
+                "title": "Ctr",
+                "type": "number"
+              },
+              "position": {
+                "default": 0.0,
+                "title": "Position",
+                "type": "number"
+              }
+            },
+            "title": "QueryRow",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "site_url": {
+            "default": "",
+            "title": "Site Url",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/$defs/QueryRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "count": {
+            "default": 0,
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "title": "QueryList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_gsc_chat"
+    }
+  ],
+  "signals": [],
+  "schedules": [],
+  "required_scopes": [],
+  "icon_size_bytes": 315,
+  "oauth": [
+    {
+      "provider": "google",
+      "collection": "gsc_accounts",
+      "scopes": [
+        "https://www.googleapis.com/auth/webmasters.readonly",
+        "openid",
+        "https://www.googleapis.com/auth/userinfo.email"
+      ],
+      "has_hook": false
+    }
+  ],
+  "lifecycle": {
+    "on_install": true,
+    "health_check": {
+      "interval_sec": 60
+    }
+  },
+  "lifecycle_hooks": {
+    "on_install": {
+      "signature": "(ctx)"
+    }
+  },
+  "secrets": [
+    {
+      "name": "google_client_id",
+      "description": "Google OAuth Client ID for Search Console (developer-owned; one OAuth app for all users).",
+      "required": true,
+      "write_mode": "user",
+      "max_bytes": 512,
+      "scope": "app",
+      "env_fallback": "IMPERAL_APPSECRET_GSC_GOOGLE_CLIENT_ID"
+    },
+    {
+      "name": "google_client_secret",
+      "description": "Google OAuth Client Secret for Search Console (developer-owned).",
+      "required": true,
+      "write_mode": "user",
+      "max_bytes": 512,
+      "scope": "app",
+      "env_fallback": "IMPERAL_APPSECRET_GSC_GOOGLE_CLIENT_SECRET"
+    }
+  ],
+  "panels": [
+    {
+      "panel_id": "secrets",
+      "slot": "right",
+      "title": "Secrets",
+      "tree": {},
+      "icon": "KeyRound",
+      "refresh": "manual",
+      "center_overlay": false
+    },
+    {
+      "panel_id": "gsc_sidebar",
+      "slot": "left",
+      "title": "Search Console",
+      "tree": {},
+      "icon": "Search",
+      "refresh": "on_event:account.switched,account.disconnected",
+      "center_overlay": false,
+      "default_width": 260
+    },
+    {
+      "panel_id": "gsc_workspace",
+      "slot": "center",
+      "title": "Search Console",
+      "tree": {},
+      "icon": "Search",
+      "refresh": "manual",
+      "center_overlay": false
+    }
+  ]
+}
