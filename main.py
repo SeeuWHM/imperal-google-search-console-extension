@@ -30,3 +30,15 @@ import handlers_analytics  # noqa: E402, F401
 import skeleton            # noqa: E402, F401
 import panels              # noqa: E402, F401
 import panels_workspace    # noqa: E402, F401
+
+# Multiple extensions share one worker process and each inserts its own
+# directory at sys.path[0] on load. Leaving it there after our imports are
+# done means a LATER extension's plain `import accounts` (or any other
+# same-named top-level module) can resolve to THIS extension's file instead
+# of its own — this bit us for real: gsc-connector's own accounts.py got
+# shadowed by a same-named file from another extension deployed afterward.
+# Once our modules are cached in sys.modules under their bare names, the
+# directory is no longer needed on sys.path — remove it so it can't leak
+# into the next extension's load.
+if _dir in sys.path:
+    sys.path.remove(_dir)
