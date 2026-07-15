@@ -8,6 +8,7 @@ full-width (flex align-items:stretch).
 from __future__ import annotations
 
 import logging
+from urllib.parse import urlparse
 
 from imperal_sdk import ui
 
@@ -16,6 +17,31 @@ from accounts import _active_account, gsc_ready
 from gsc_api import gsc_list_sites
 
 log = logging.getLogger("gsc_connector")
+
+_SHOWN_COLLAPSED = 8
+
+# GSC's permissionLevel strings, in plain English.
+_PERMISSION_LABELS = {
+    "siteOwner": "Owner",
+    "siteFullUser": "Full user",
+    "siteRestrictedUser": "Restricted user",
+    "siteUnverifiedUser": "Unverified",
+}
+
+
+def _parse_site(site_url: str) -> tuple[str, str]:
+    """Split a GSC property identifier into (clean domain, connection kind).
+
+    GSC properties come in two shapes: a domain property ("sc-domain:example.com",
+    covers every protocol/subdomain/port) or a URL-prefix property
+    ("https://www.example.com/", one exact prefix). Both are real GSC concepts
+    worth keeping visible — just not as raw "sc-domain:" prefixes — so we show
+    the bare domain everywhere and label the connection kind underneath.
+    """
+    if site_url.startswith("sc-domain:"):
+        return site_url[len("sc-domain:"):], "Domain property (all subdomains & protocols)"
+    domain = urlparse(site_url).netloc or site_url
+    return domain, "URL-prefix property (exact URL only)"
 
 
 def _connect_panel(error: str = "") -> ui.UINode:
@@ -44,7 +70,7 @@ def _connect_panel(error: str = "") -> ui.UINode:
 @ext.panel("gsc_sidebar", slot="left", title="Search Console", icon="Search",
            default_width=260,
            refresh="on_event:account.switched,account.disconnected")
-async def sidebar_panel(ctx):
+async def sidebar_panel(ctx, show_all: bool = False):
     if not await gsc_ready(ctx):
         return _connect_panel()
 
@@ -55,21 +81,30 @@ async def sidebar_panel(ctx):
         # the connect prompt with the real reason, not a dead-end error card.
         return _connect_panel(error=str(e))
 
-    shown = rows[:12]
+    shown = rows if show_all else rows[:_SHOWN_COLLAPSED]
     remaining = len(rows) - len(shown)
     list_or_empty = (
         ui.List(items=[
-            ui.ListItem(id=r.get("site_url", ""), title=r.get("site_url", "") or "(unknown)",
-                        subtitle=r.get("permission_level", ""),
-                        on_click=ui.Call("__panel__gsc_workspace", site_url=r.get("site_url", "")))
+            ui.ListItem(
+                id=r.get("site_url", ""),
+                title=(_parse_site(r.get("site_url", ""))[0] or "(unknown)"),
+                subtitle=_PERMISSION_LABELS.get(
+                    r.get("permission_level", ""), r.get("permission_level", "") or "Unknown access"
+                ),
+                on_click=ui.Call("__panel__gsc_workspace", site_url=r.get("site_url", "")),
+            )
             for r in shown
         ])
         if shown else
         ui.Text(content="No verified sites on this Google account.", variant="caption")
     )
     footer = (
-        [ui.Text(content=f"+ {remaining} more site(s)", variant="caption")]
-        if remaining > 0 else []
+        [ui.Button(label=f"+ {remaining} more site(s)", variant="ghost", size="sm",
+                    on_click=ui.Call("__panel__gsc_sidebar", show_all=True))]
+        if remaining > 0 else
+        ([ui.Button(label="Show fewer", variant="ghost", size="sm",
+                     on_click=ui.Call("__panel__gsc_sidebar", show_all=False))]
+         if show_all and len(rows) > _SHOWN_COLLAPSED else [])
     )
 
     root = ui.Stack(children=[

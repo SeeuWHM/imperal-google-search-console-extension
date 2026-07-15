@@ -492,7 +492,7 @@
   "signals": [],
   "schedules": [],
   "required_scopes": [],
-  "icon_size_bytes": 315,
+  "icon_size_bytes": 1804,
   "oauth": [
     {
       "provider": "google",

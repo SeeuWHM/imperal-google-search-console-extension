@@ -17,7 +17,32 @@ async def _all_accounts(ctx) -> list[dict]:
         item = dict(d.data)
         item["doc_id"] = d.id
         out.append(item)
+    await _hydrate_missing_emails(ctx, out)
     return out
+
+
+async def _hydrate_missing_emails(ctx, accounts: list[dict]) -> None:
+    """The platform's generic OAuth callback fetches an account's email via the
+    Gmail profile API for EVERY "google" provider regardless of scope — GSC only
+    grants webmasters.readonly/openid/userinfo.email (no Gmail scope), so that
+    lookup 403s and every connected account gets persisted as email="unknown".
+    Left alone, this collapses every GSC account onto the same store doc on
+    upsert (same bug class doc-reader hit with drive.file-only grants). Fetch
+    the real address ourselves (covered by the scopes we DO have) and persist
+    it once per account. Best-effort — must never break account loading.
+    """
+    from gsc_api import gsc_userinfo  # local import: avoids a gsc_api<->accounts cycle
+
+    for acc in accounts:
+        email = acc.get("email")
+        if email and email != "unknown":
+            continue  # already has a real address — one-time cost per account
+        real = await gsc_userinfo(ctx, acc)
+        doc_id = acc.get("doc_id")
+        if real and doc_id:
+            acc["email"] = real
+            await ctx.store.update(ACCOUNTS_COLLECTION, doc_id,
+                                    {k: v for k, v in acc.items() if k != "doc_id"})
 
 
 async def _active_account(ctx) -> dict:
@@ -30,7 +55,9 @@ async def _active_account(ctx) -> dict:
 def _account_email(acc: dict) -> str:
     """Stable, UNIQUE per-account key. Prefer the real Google address; fall back
     to the store doc id when it's absent or the "unknown" placeholder — otherwise
-    accounts without a captured email would collide under one key."""
+    accounts without a captured email would collide under one key.
+    `_hydrate_missing_emails` fills the real address in for display; this stays
+    safe even when that fetch fails."""
     email = acc.get("email")
     if email and email != "unknown":
         return email
