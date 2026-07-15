@@ -20,7 +20,7 @@ log = logging.getLogger("gsc_connector")
 
 ext = Extension(
     "google-search-console-connector",
-    version="0.1.0",
+    version="0.2.0",
     display_name="Google Search Console",
     description=(
         "Connect your own Google account to see your Search Console properties and "
