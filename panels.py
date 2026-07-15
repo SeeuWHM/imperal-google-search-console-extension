@@ -1,5 +1,7 @@
-"""GSC sidebar panel — connect prompt when disconnected; the user's verified
-sites when connected. Data is per-user via Google OAuth.
+"""GSC sidebar panel — connect prompt when disconnected; connected accounts +
+the active account's verified sites when connected. Data is per-user via
+Google OAuth, one Google account at a time can be active but many can be
+connected simultaneously (see accounts block below).
 
 Layout note: action buttons live inside a horizontal Stack so a ghost/primary
 button keeps its content width — a lone Button in a vertical Stack renders
@@ -13,7 +15,7 @@ from urllib.parse import urlparse
 from imperal_sdk import ui
 
 from app import ext
-from accounts import _active_account, gsc_ready
+from accounts import _account_email, _active_account, _all_accounts, gsc_ready
 from gsc_api import gsc_list_sites
 
 log = logging.getLogger("gsc_connector")
@@ -44,6 +46,23 @@ def _parse_site(site_url: str) -> tuple[str, str]:
     return domain, "URL-prefix property (exact URL only)"
 
 
+async def _account_items(ctx, accounts: list[dict], active_email: str) -> list[ui.UINode]:
+    items = []
+    for acc in accounts:
+        email = _account_email(acc)
+        is_active = email == active_email
+        items.append(ui.ListItem(
+            id=email, title=email,
+            subtitle="✓ Active" if is_active else "Click to switch",
+            avatar=ui.Avatar(fallback=email[0].upper() if email else "?", size="sm"),
+            badge=ui.Badge("✓", color="green") if is_active else None,
+            on_click=None if is_active else ui.Call("switch_account", account=email),
+            actions=[{"label": "Disconnect", "icon": "Trash2",
+                      "on_click": ui.Call("disconnect_account", account=email)}],
+        ))
+    return items
+
+
 def _connect_panel(error: str = "") -> ui.UINode:
     children = [
         ui.Header(text="Search Console", level=4),
@@ -61,7 +80,8 @@ def _connect_panel(error: str = "") -> ui.UINode:
                   on_click=ui.Call("connect_gsc")),
     ]))
     children.append(ui.Text(
-        content="Read-only access (webmasters.readonly) — you choose which Google account to grant.",
+        content="Read-only access (webmasters.readonly) — you choose which Google account to grant. "
+                "You can connect more than one account and switch between them below.",
         variant="caption",
     ))
     return ui.Stack(children=children)
@@ -74,8 +94,12 @@ async def sidebar_panel(ctx, show_all: bool = False):
     if not await gsc_ready(ctx):
         return _connect_panel()
 
+    accounts = await _all_accounts(ctx)
+    active = await _active_account(ctx)
+    active_email = _account_email(active)
+
     try:
-        rows = await gsc_list_sites(ctx, await _active_account(ctx))
+        rows = await gsc_list_sites(ctx, active)
     except Exception as e:
         # A connected account whose token/grant no longer works drops back to
         # the connect prompt with the real reason, not a dead-end error card.
@@ -107,22 +131,35 @@ async def sidebar_panel(ctx, show_all: bool = False):
          if show_all and len(rows) > _SHOWN_COLLAPSED else [])
     )
 
+    # Account selector — every connected Google account, active one marked,
+    # click any other to switch. This was the missing piece: with only one
+    # account ever rendered, a second "Connect" had nowhere to show up.
+    account_items = await _account_items(ctx, accounts, active_email)
+
+    # Build the OAuth URL server-side so the button can ui.Open it directly
+    # (ui.Call would surface the URL as a toast instead of opening it).
+    try:
+        auth_url = await ctx.oauth_authorize_url("google")
+        add_account_btn = ui.Button(label="Add another Google account", icon="Plus", variant="outline",
+                                     on_click=ui.Open(auth_url))
+    except Exception as e:
+        add_account_btn = ui.Alert(message=f"Couldn't build the connect link: {e}", type="warning")
+
     root = ui.Stack(children=[
         ui.Header(text="Search Console", level=4),
         ui.Badge(label="● connected", color="green"),
+        ui.Divider(),
+        ui.Text(content=f"Accounts ({len(accounts)})", variant="caption"),
+        ui.List(items=account_items) if account_items else ui.Empty(message="No accounts"),
+        ui.Stack(direction="h", gap=2, wrap=True, children=[add_account_btn]),
         ui.Divider(),
         ui.Stats(children=[
             ui.Stat(label="Sites", value=str(len(rows)), icon="Globe"),
         ]),
         ui.Divider(),
-        ui.Text(content="Your verified properties — click one to open", variant="caption"),
+        ui.Text(content=f"{active_email}'s verified properties — click one to open", variant="caption"),
         list_or_empty,
         *footer,
-        ui.Divider(),
-        ui.Stack(direction="h", gap=2, wrap=True, children=[
-            ui.Button(label="Add Google account", icon="Plus", variant="outline",
-                      on_click=ui.Call("connect_gsc")),
-        ]),
     ])
     # Claim the center slot so a site click here opens the workspace panel in
     # "center" (not "right") — same fix se-ranking/article-writer needed.

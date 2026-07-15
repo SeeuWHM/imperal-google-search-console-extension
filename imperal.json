@@ -2,7 +2,7 @@
   "manifest_schema_version": 3,
   "sdk_version": "5.9.6",
   "app_id": "google-search-console-connector",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "name": "Google Search Console",
   "description": "Connect your own Google account to see your Search Console properties and their real Google Search performance — top queries, impressions, clicks and average position, straight from Google.",
   "icon": "icon.svg",
