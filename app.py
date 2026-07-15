@@ -19,7 +19,7 @@ from accounts import _all_accounts
 log = logging.getLogger("gsc_connector")
 
 ext = Extension(
-    "gsc-connector",
+    "google-search-console-connector",
     version="0.1.0",
     display_name="Google Search Console",
     description=(
@@ -49,9 +49,10 @@ chat = ChatExtension(
 # google/microsoft/yahoo (hardcoded authorize endpoints) and reads the app
 # secret {provider}_client_id, i.e. "google_client_id". A custom key raises at
 # runtime and looks up a non-existent secret. The callback route is
-#   https://panel.imperal.io/v1/ext/gsc-connector/oauth/google/callback
-# derived from the app_id "gsc-connector" (NOT the git repo name). Register THAT
-# exact URI as the Authorized redirect URI in the Google Cloud OAuth client.
+#   https://panel.imperal.io/v1/ext/google-search-console-connector/oauth/google/callback
+# derived from the app_id "google-search-console-connector" (the Dev Portal app
+# id — NOT the git repo name). Register THAT exact URI as the Authorized redirect
+# URI in the Google Cloud OAuth client, or connect fails with redirect_uri_mismatch.
 # webmasters.readonly = read-only GSC. openid + userinfo.email let the gateway
 # capture the account's address so multiple connected accounts stay distinct.
 ext.oauth(
