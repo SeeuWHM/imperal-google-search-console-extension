@@ -9,7 +9,7 @@ from __future__ import annotations
 from imperal_sdk import ui
 
 from app import ext
-from accounts import gsc_ready
+from gsc_accounts import gsc_ready
 from handlers_analytics import impl_striking_distance, impl_top_queries
 
 

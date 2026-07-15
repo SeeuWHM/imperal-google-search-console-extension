@@ -6,7 +6,7 @@ import logging
 from imperal_sdk.chat.action_result import ActionResult
 
 from app import chat
-from accounts import _active_account, gsc_ready
+from gsc_accounts import _active_account, gsc_ready
 from gsc_api import gsc_list_sites
 from params import EmptyParams
 from response_models import SiteList, build_site_list

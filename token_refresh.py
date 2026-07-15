@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import time
 
-from accounts import ACCOUNTS_COLLECTION
+from gsc_accounts import ACCOUNTS_COLLECTION
 
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 

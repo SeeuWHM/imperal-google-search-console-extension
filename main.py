@@ -14,7 +14,7 @@ if _dir not in sys.path:
     sys.path.insert(0, _dir)
 
 _MODULES = (
-    "app", "accounts", "token_refresh", "gsc_api",
+    "app", "gsc_accounts", "token_refresh", "gsc_api",
     "params", "response_models",
     "handlers_connect", "handlers_sites", "handlers_analytics",
     "skeleton", "panels", "panels_workspace",

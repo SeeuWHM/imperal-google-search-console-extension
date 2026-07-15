@@ -6,7 +6,7 @@ the skeleton contract.
 from __future__ import annotations
 
 from app import ext
-from accounts import _active_account, gsc_ready
+from gsc_accounts import _active_account, gsc_ready
 from gsc_api import gsc_list_sites
 
 

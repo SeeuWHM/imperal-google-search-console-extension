@@ -14,7 +14,7 @@ import logging
 
 from imperal_sdk import Extension, ChatExtension
 
-from accounts import _all_accounts
+from gsc_accounts import _all_accounts
 
 log = logging.getLogger("gsc_connector")
 

@@ -12,7 +12,7 @@ import logging
 from imperal_sdk.chat.action_result import ActionResult
 
 from app import chat
-from accounts import (
+from gsc_accounts import (
     ACCOUNTS_COLLECTION, _account_by_email, _account_email, _active_account, _all_accounts,
 )
 from gsc_api import gsc_list_sites

@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 from imperal_sdk import ui
 
 from app import ext
-from accounts import _account_email, _active_account, _all_accounts, gsc_ready
+from gsc_accounts import _account_email, _active_account, _all_accounts, gsc_ready
 from gsc_api import gsc_list_sites
 
 log = logging.getLogger("gsc_connector")
