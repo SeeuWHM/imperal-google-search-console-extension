@@ -31,9 +31,14 @@ async def _opportunities_section(ctx, site_url: str) -> ui.UINode:
     ])
 
 
-async def _top_queries_section(ctx, site_url: str) -> ui.UINode:
+_Q_STEP = 25
+_Q_MAX = 100   # GSC Search Analytics rowLimit ceiling we expose in the panel
+
+
+async def _top_queries_section(ctx, site_url: str, q_limit: int = _Q_STEP) -> ui.UINode:
+    q_limit = max(_Q_STEP, min(int(q_limit or _Q_STEP), _Q_MAX))
     try:
-        rows = await impl_top_queries(ctx, site_url, days=28, limit=25)
+        rows = await impl_top_queries(ctx, site_url, days=28, limit=q_limit)
     except Exception as e:
         return ui.Alert(message=str(e), type="error")
     body = ui.DataTable(
@@ -45,13 +50,19 @@ async def _top_queries_section(ctx, site_url: str) -> ui.UINode:
         ],
         rows=[{"query": r["query"], "clicks": r["clicks"], "impressions": r["impressions"], "position": r["position"]} for r in rows],
     ) if rows else ui.Text(content="No query data for this site/period yet.", variant="caption")
-    return ui.Stack(gap=1, children=[
-        ui.Header(text="Top queries (last 28 days)", level=5), body,
-    ])
+    children = [ui.Header(text=f"Top queries (last 28 days) — {len(rows)}", level=5), body]
+    # Offer "Load more" only when the page came back full (more likely available)
+    # and we haven't hit the ceiling — re-render the same panel with a bigger limit.
+    if len(rows) >= q_limit and q_limit < _Q_MAX:
+        children.append(ui.Button(
+            label="Load more queries", variant="ghost", size="sm",
+            on_click=ui.Call("__panel__gsc_workspace", site_url=site_url, q_limit=min(q_limit + _Q_STEP, _Q_MAX)),
+        ))
+    return ui.Stack(gap=1, children=children)
 
 
 @ext.panel("gsc_workspace", slot="center", title="Search Console", icon="Search")
-async def workspace_panel(ctx, site_url: str = ""):
+async def workspace_panel(ctx, site_url: str = "", q_limit: int = _Q_STEP):
     if not await gsc_ready(ctx):
         return ui.Empty(message="Connect your Google account first — run connect_gsc in chat.")
     if not site_url:
@@ -59,6 +70,6 @@ async def workspace_panel(ctx, site_url: str = ""):
 
     opportunities, top = (
         await _opportunities_section(ctx, site_url),
-        await _top_queries_section(ctx, site_url),
+        await _top_queries_section(ctx, site_url, q_limit),
     )
     return ui.Stack(children=[opportunities, ui.Divider(), top])

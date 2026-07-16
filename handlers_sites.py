@@ -18,7 +18,12 @@ _NOT_CONNECTED = "Connect your Google account first — call connect_gsc, then a
 
 @chat.function(
     "list_sites", action_type="read", data_model=SiteList,
-    description="List the Search Console properties (verified sites) the connected Google account can access — site URL and permission level. Connect first with connect_gsc.",
+    description=(
+        "List the Search Console properties (verified sites) the connected Google account can "
+        "access — site URL and permission level. Connect first with connect_gsc. Use for: "
+        "покажи мои сайты в search console, какие сайты подключены к гугл, list my gsc sites, "
+        "show search console properties, verified google sites."
+    ),
 )
 async def fn_list_sites(ctx, params: EmptyParams) -> ActionResult:
     """List the active Google account's verified Search Console properties."""

@@ -136,14 +136,13 @@ async def sidebar_panel(ctx, show_all: bool = False):
     # account ever rendered, a second "Connect" had nowhere to show up.
     account_items = await _account_items(ctx, accounts, active_email)
 
-    # Build the OAuth URL server-side so the button can ui.Open it directly
-    # (ui.Call would surface the URL as a toast instead of opening it).
-    try:
-        auth_url = await ctx.oauth_authorize_url("google")
-        add_account_btn = ui.Button(label="Add another Google account", icon="Plus", variant="outline",
-                                     on_click=ui.Open(auth_url))
-    except Exception as e:
-        add_account_btn = ui.Alert(message=f"Couldn't build the connect link: {e}", type="warning")
+    # Open the OAuth flow through the connect_gsc chat function via ui.Call —
+    # NOT ui.Open(url). The platform opens an OAuth-connect function's URL in a
+    # small popup WINDOW (identical to Gmail / Google Drive); ui.Open(url) opened
+    # a plain browser TAB instead. This is the exact call the first-connect
+    # button already uses, so both entry points now behave the same.
+    add_account_btn = ui.Button(label="Add another Google account", icon="Plus", variant="outline",
+                                 on_click=ui.Call("connect_gsc"))
 
     root = ui.Stack(children=[
         ui.Header(text="Search Console", level=4),

@@ -7,7 +7,14 @@ refresh lives in token_refresh.py, Google calls in gsc_api.py.
 """
 from __future__ import annotations
 
-ACCOUNTS_COLLECTION = "gsc_accounts"
+# Top-level imports only — resolved at LOAD time while the extension dir is
+# still on sys.path. The old runtime-deferred `from gsc_api import gsc_userinfo`
+# (inside _hydrate_missing_emails) raised "No module named 'gsc_api'" at call
+# time once main.py had removed the dir from sys.path. ACCOUNTS_COLLECTION now
+# lives in the leaf `constants` module so importing gsc_api here creates no
+# cycle (gsc_api -> token_refresh -> constants, never back to gsc_accounts).
+from constants import ACCOUNTS_COLLECTION
+from gsc_api import gsc_userinfo
 
 
 async def _all_accounts(ctx) -> list[dict]:
@@ -18,7 +25,7 @@ async def _all_accounts(ctx) -> list[dict]:
         item["doc_id"] = d.id
         out.append(item)
     await _hydrate_missing_emails(ctx, out)
-    return out
+    return await _dedupe_by_email(ctx, out)
 
 
 async def _hydrate_missing_emails(ctx, accounts: list[dict]) -> None:
@@ -31,8 +38,6 @@ async def _hydrate_missing_emails(ctx, accounts: list[dict]) -> None:
     the real address ourselves (covered by the scopes we DO have) and persist
     it once per account. Best-effort — must never break account loading.
     """
-    from gsc_api import gsc_userinfo  # local import: avoids a gsc_api<->accounts cycle
-
     for acc in accounts:
         email = acc.get("email")
         if email and email != "unknown":
@@ -43,6 +48,45 @@ async def _hydrate_missing_emails(ctx, accounts: list[dict]) -> None:
             acc["email"] = real
             await ctx.store.update(ACCOUNTS_COLLECTION, doc_id,
                                     {k: v for k, v in acc.items() if k != "doc_id"})
+
+
+async def _dedupe_by_email(ctx, accounts: list[dict]) -> list[dict]:
+    """Collapse duplicate account docs that share one real email.
+
+    The platform OAuth callback persists email="unknown" (no Gmail scope to
+    resolve it), so it can't match an existing account and creates a FRESH doc
+    on every reconnect. Once _hydrate_missing_emails fills the real address in,
+    several docs end up with the same email — the "two server@gmail.com" the
+    user sees. Keep one per email (prefer the active doc, then one that still
+    has a refresh_token) and delete the rest. Best-effort — a store failure
+    must never break account loading, so we swallow delete errors and only drop
+    docs we actually removed. Never merges accounts still stuck on "unknown"
+    (those may be genuinely different people)."""
+    by_email: dict[str, list[dict]] = {}
+    for acc in accounts:
+        email = acc.get("email")
+        if not email or email == "unknown":
+            continue
+        by_email.setdefault(email, []).append(acc)
+
+    dropped_ids: set[str] = set()
+    for group in by_email.values():
+        if len(group) < 2:
+            continue
+        group.sort(key=lambda a: (bool(a.get("is_active")), bool(a.get("refresh_token"))), reverse=True)
+        for extra in group[1:]:
+            doc_id = extra.get("doc_id")
+            if not doc_id:
+                continue
+            try:
+                await ctx.store.delete(ACCOUNTS_COLLECTION, doc_id)
+                dropped_ids.add(doc_id)
+            except Exception:
+                pass
+
+    if not dropped_ids:
+        return accounts
+    return [a for a in accounts if a.get("doc_id") not in dropped_ids]
 
 
 async def _active_account(ctx) -> dict:
