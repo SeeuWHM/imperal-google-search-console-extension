@@ -1,8 +1,8 @@
 {
   "manifest_schema_version": 3,
-  "sdk_version": "5.9.6",
+  "sdk_version": "5.9.9",
   "app_id": "google-search-console-connector",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "name": "Google Search Console",
   "description": "Connect your own Google account to see your Search Console properties and their real Google Search performance — top queries, impressions, clicks and average position, straight from Google.",
   "icon": "icon.svg",
@@ -28,7 +28,7 @@
     },
     {
       "name": "connect_gsc",
-      "description": "Start Google Search Console OAuth — returns an authorisation URL to open in the browser (read-only Search Console access). Connecting again adds another Google account, each seeing its own sites.",
+      "description": "Start Google Search Console OAuth — returns an authorisation URL to open in the browser (read-only Search Console access). Connecting again adds another Google account, each seeing its own sites. Use for: подключи google search console, подключи гугл серч консоль, привяжи гугл аккаунт, connect google search console, connect gsc, add another google account, добавь ещё один google аккаунт.",
       "action_type": "read",
       "chain_callable": true,
       "effects": [],
@@ -62,7 +62,7 @@
     },
     {
       "name": "connection_status",
-      "description": "Whether a Google account is connected to Search Console, how many accounts, and how many sites the active account can see.",
+      "description": "Whether a Google account is connected to Search Console, how many accounts, and how many sites the active account can see. Use for: подключён ли search console, подключён ли гугл, is my google account connected, gsc connection status.",
       "action_type": "read",
       "chain_callable": true,
       "effects": [],
@@ -103,7 +103,7 @@
     },
     {
       "name": "list_accounts",
-      "description": "List the Google accounts connected to Search Console — each account's email and which one is active.",
+      "description": "List the Google accounts connected to Search Console — each account's email and which one is active. Use for: покажи мои google аккаунты, какие аккаунты search console подключены, list connected google accounts, which gsc account is active.",
       "action_type": "read",
       "chain_callable": true,
       "effects": [],
@@ -157,7 +157,7 @@
     },
     {
       "name": "switch_account",
-      "description": "Change the active Google account. Subsequent site and query lookups use this account until switched again.",
+      "description": "Change the active Google account. Subsequent site and query lookups use this account until switched again. Use for: переключи google аккаунт, переключи на другой аккаунт search console, switch google account, use my other gsc account.",
       "action_type": "write",
       "chain_callable": true,
       "effects": [
@@ -195,7 +195,7 @@
     },
     {
       "name": "disconnect_account",
-      "description": "Disconnect a Google account from Search Console. Nothing in Google is changed; the OAuth grant itself can be fully revoked at myaccount.google.com/permissions.",
+      "description": "Disconnect a Google account from Search Console. Nothing in Google is changed; the OAuth grant itself can be fully revoked at myaccount.google.com/permissions. Use for: отключи google аккаунт, убери аккаунт search console, disconnect google account, remove gsc account.",
       "action_type": "destructive",
       "chain_callable": true,
       "effects": [
@@ -238,7 +238,7 @@
     },
     {
       "name": "list_sites",
-      "description": "List the Search Console properties (verified sites) the connected Google account can access — site URL and permission level. Connect first with connect_gsc.",
+      "description": "List the Search Console properties (verified sites) the connected Google account can access — site URL and permission level. Connect first with connect_gsc. Use for: покажи мои сайты в search console, какие сайты подключены к гугл, list my gsc sites, show search console properties, verified google sites.",
       "action_type": "read",
       "chain_callable": true,
       "effects": [],
@@ -292,7 +292,7 @@
     },
     {
       "name": "top_queries",
-      "description": "The connected site's best-performing Google search queries over the last N days (default 28) — query, clicks, impressions, CTR %, average position. Connect first with connect_gsc.",
+      "description": "The connected site's best-performing Google search queries over the last N days (default 28) — query, clicks, impressions, CTR %, average position. Connect first with connect_gsc. Use for: топ запросы google, топ запросы search console, по каким запросам находят сайт в гугле, top Google queries, google search queries, GSC top queries.",
       "action_type": "read",
       "chain_callable": true,
       "effects": [],
@@ -391,7 +391,7 @@
     },
     {
       "name": "striking_distance",
-      "description": "'Almost ranking' queries for the connected site — where it ranks position 5-20 with real impressions (last N days, default 28), sorted by impressions. These are the best article/optimisation opportunities. Connect first with connect_gsc.",
+      "description": "'Almost ranking' queries for the connected site — where it ranks position 4-20 with real impressions (last N days, default 28), sorted by impressions. These are the best article/optimisation opportunities (quick SEO wins). Connect first with connect_gsc. Use for: быстрые победы seo, что дописать, content opportunities, почти в топе, striking distance, quick wins, какие запросы можно вытащить в топ.",
       "action_type": "read",
       "chain_callable": true,
       "effects": [],
