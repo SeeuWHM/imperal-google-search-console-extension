@@ -30,9 +30,8 @@ log = logging.getLogger("gsc_connector")
     description=(
         "Start Google Search Console OAuth — returns an authorisation URL to open in the "
         "browser (read-only Search Console access). Connecting again adds another Google "
-        "account, each seeing its own sites. Use for: подключи google search console, "
-        "подключи гугл серч консоль, привяжи гугл аккаунт, connect google search console, "
-        "connect gsc, add another google account, добавь ещё один google аккаунт."
+        "account, each seeing its own sites. Use for: connect google search console, "
+        "connect gsc, add another google account."
     ),
 )
 async def fn_connect_gsc(ctx, params: EmptyParams) -> ActionResult:
@@ -55,8 +54,8 @@ async def fn_connect_gsc(ctx, params: EmptyParams) -> ActionResult:
     "connection_status", action_type="read", data_model=ConnectionStatus,
     description=(
         "Whether a Google account is connected to Search Console, how many accounts, and how "
-        "many sites the active account can see. Use for: подключён ли search console, "
-        "подключён ли гугл, is my google account connected, gsc connection status."
+        "many sites the active account can see. Use for: is my google account connected, "
+        "gsc connection status."
     ),
 )
 async def fn_connection_status(ctx, params: EmptyParams) -> ActionResult:
@@ -82,8 +81,7 @@ async def fn_connection_status(ctx, params: EmptyParams) -> ActionResult:
     "list_accounts", action_type="read", data_model=AccountsList,
     description=(
         "List the Google accounts connected to Search Console — each account's email and "
-        "which one is active. Use for: покажи мои google аккаунты, какие аккаунты search "
-        "console подключены, list connected google accounts, which gsc account is active."
+        "which one is active. Use for: list connected google accounts, which gsc account is active."
     ),
 )
 async def fn_list_accounts(ctx, params: EmptyParams) -> ActionResult:
@@ -105,8 +103,7 @@ async def fn_list_accounts(ctx, params: EmptyParams) -> ActionResult:
     effects=["update:account"], data_model=AccountSwitched,
     description=(
         "Change the active Google account. Subsequent site and query lookups use this "
-        "account until switched again. Use for: переключи google аккаунт, переключи на "
-        "другой аккаунт search console, switch google account, use my other gsc account."
+        "account until switched again. Use for: switch google account, use my other gsc account."
     ),
 )
 async def fn_switch_account(ctx, params: AccountParam) -> ActionResult:
@@ -133,8 +130,7 @@ async def fn_switch_account(ctx, params: AccountParam) -> ActionResult:
     description=(
         "Disconnect a Google account from Search Console. Nothing in Google is changed; the "
         "OAuth grant itself can be fully revoked at myaccount.google.com/permissions. Use for: "
-        "отключи google аккаунт, убери аккаунт search console, disconnect google account, "
-        "remove gsc account."
+        "disconnect google account, remove gsc account."
     ),
 )
 async def fn_disconnect_account(ctx, params: AccountParam) -> ActionResult:

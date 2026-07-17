@@ -80,8 +80,7 @@ async def impl_striking_distance(ctx, site_url: str, days: int = 28, limit: int 
     description=(
         "The connected site's best-performing Google search queries over the last N days "
         "(default 28) — query, clicks, impressions, CTR %, average position. Connect first "
-        "with connect_gsc. Use for: топ запросы google, топ запросы search console, по каким "
-        "запросам находят сайт в гугле, top Google queries, google search queries, GSC top queries."
+        "with connect_gsc. Use for: top Google queries, google search queries, GSC top queries."
     ),
 )
 async def fn_top_queries(ctx, params: QueryParams) -> ActionResult:
@@ -105,8 +104,7 @@ async def fn_top_queries(ctx, params: QueryParams) -> ActionResult:
         "'Almost ranking' queries for the connected site — where it ranks position 4-20 with "
         "real impressions (last N days, default 28), sorted by impressions. These are the best "
         "article/optimisation opportunities (quick SEO wins). Connect first with connect_gsc. "
-        "Use for: быстрые победы seo, что дописать, content opportunities, почти в топе, "
-        "striking distance, quick wins, какие запросы можно вытащить в топ."
+        "Use for: content opportunities, striking distance, quick wins."
     ),
 )
 async def fn_striking_distance(ctx, params: QueryParams) -> ActionResult:
