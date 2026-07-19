@@ -15,7 +15,7 @@ if _dir not in sys.path:
 
 _MODULES = (
     "app", "constants", "gsc_accounts", "token_refresh", "gsc_api",
-    "params", "response_models",
+    "params", "response_models", "cache_helpers",
     "handlers_connect", "handlers_sites", "handlers_analytics",
     "skeleton", "panels", "panels_workspace",
 )

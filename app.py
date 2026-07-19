@@ -20,7 +20,7 @@ log = logging.getLogger("gsc_connector")
 
 ext = Extension(
     "google-search-console-connector",
-    version="0.4.0",
+    version="0.5.0",
     display_name="Google Search Console",
     description=(
         "Connect your own Google account to see your Search Console properties and "
@@ -84,6 +84,13 @@ ext.secret(
     required=True, scope="app",
     env_fallback="IMPERAL_APPSECRET_GSC_GOOGLE_CLIENT_SECRET", max_bytes=512,
 )(lambda: None)
+
+
+# ctx.cache — short-lived (platform-capped 5-300s) per-user cache so the
+# sidebar site-list and workspace opportunities/top-queries panels don't
+# re-hit googleapis.com Search Analytics on every render. See cache_helpers.py.
+from cache_helpers import CachedGscPayload  # noqa: E402
+ext.cache_model("gsc_payload")(CachedGscPayload)
 
 
 @ext.health_check

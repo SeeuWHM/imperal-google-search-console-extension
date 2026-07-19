@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 from imperal_sdk import ui
 
 from app import ext
+from cache_helpers import SITES_CACHE_TTL, cached_call
 from gsc_accounts import _account_email, _active_account, _all_accounts, gsc_ready
 from gsc_api import gsc_list_sites
 
@@ -99,7 +100,10 @@ async def sidebar_panel(ctx, show_all: bool = False):
     active_email = _account_email(active)
 
     try:
-        rows = await gsc_list_sites(ctx, active)
+        rows = await cached_call(
+            ctx, "sites", active_email, None, SITES_CACHE_TTL,
+            lambda: gsc_list_sites(ctx, active),
+        )
     except Exception as e:
         # A connected account whose token/grant no longer works drops back to
         # the connect prompt with the real reason, not a dead-end error card.

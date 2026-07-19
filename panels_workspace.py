@@ -9,13 +9,18 @@ from __future__ import annotations
 from imperal_sdk import ui
 
 from app import ext
-from gsc_accounts import gsc_ready
+from cache_helpers import ANALYTICS_CACHE_TTL, cached_call
+from gsc_accounts import _account_email, _active_account, gsc_ready
 from handlers_analytics import impl_striking_distance, impl_top_queries
 
 
 async def _opportunities_section(ctx, site_url: str) -> ui.UINode:
     try:
-        rows = await impl_striking_distance(ctx, site_url, days=28, limit=25)
+        account_key = _account_email(await _active_account(ctx))
+        rows = await cached_call(
+            ctx, "striking_distance", account_key, {"site_url": site_url}, ANALYTICS_CACHE_TTL,
+            lambda: impl_striking_distance(ctx, site_url, days=28, limit=25),
+        )
     except Exception as e:
         return ui.Alert(message=str(e), type="error")
     body = ui.DataTable(
@@ -38,7 +43,11 @@ _Q_MAX = 100   # GSC Search Analytics rowLimit ceiling we expose in the panel
 async def _top_queries_section(ctx, site_url: str, q_limit: int = _Q_STEP) -> ui.UINode:
     q_limit = max(_Q_STEP, min(int(q_limit or _Q_STEP), _Q_MAX))
     try:
-        rows = await impl_top_queries(ctx, site_url, days=28, limit=q_limit)
+        account_key = _account_email(await _active_account(ctx))
+        rows = await cached_call(
+            ctx, "top_queries", account_key, {"site_url": site_url, "q_limit": q_limit}, ANALYTICS_CACHE_TTL,
+            lambda: impl_top_queries(ctx, site_url, days=28, limit=q_limit),
+        )
     except Exception as e:
         return ui.Alert(message=str(e), type="error")
     body = ui.DataTable(
