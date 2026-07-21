@@ -1,7 +1,7 @@
 # Google Search Console Connector
 
-[![Imperal SDK](https://img.shields.io/badge/imperal--sdk-5.9.9-blue)](https://pypi.org/project/imperal-sdk/)
-[![Version](https://img.shields.io/badge/version-0.4.0-green)](https://github.com/SeeuWHM/imperal-google-search-console-extension/releases)
+[![Imperal SDK](https://img.shields.io/badge/imperal--sdk-5.9.12-blue)](https://pypi.org/project/imperal-sdk/)
+[![Version](https://img.shields.io/badge/version-0.5.1-green)](https://github.com/SeeuWHM/imperal-google-search-console-extension/releases)
 [![License](https://img.shields.io/badge/license-LGPL--2.1-orange)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Imperal%20Cloud-purple)](https://panel.imperal.io)
 
@@ -66,8 +66,11 @@ imperal-google-search-console-extension/
 ├── handlers_connect.py      # connect_gsc, connection_status, list_accounts, switch_account, disconnect_account
 ├── handlers_sites.py        # list_sites
 ├── handlers_analytics.py    # top_queries, striking_distance (+ impl_ helpers reused by the panel, 0 tokens)
+├── cache_helpers.py         # ctx.cache wrapper (cached_call) — panel reads share one TTL cache per account
 ├── panels.py                 # Left sidebar — account selector + verified sites (load-more)
-├── panels_workspace.py       # Center panel — opportunities (striking-distance) + top queries (load-more)
+├── panels_workspace.py       # Center panel — opportunities (striking-distance) + top queries (load-more), fetched concurrently via asyncio.gather
+├── requirements.txt          # imperal-sdk>=5.9.9
+├── tests/                    # pytest — accounts store, REST wrappers, every chat function (44 tests, no network)
 └── imperal.json              # Extension manifest
 ```
 
@@ -95,14 +98,18 @@ Two additional `@ext.skeleton` context providers (`gsc_config`, `gsc_sites`) kee
 ## Development
 
 ```bash
-python3 -m py_compile *.py   # syntax check before every commit
+python3 -m pytest tests/ -q          # 44 tests — accounts store, GSC REST wrappers (MockHTTP), every chat function
+imperal build && imperal validate    # regenerate + lint imperal.json against the installed SDK
 ```
 
-No automated test suite yet — verification happens live against the real Google Search Console API through the platform.
+Both the sidebar (`gsc_sidebar`) and workspace (`gsc_workspace`) panels refresh automatically on
+`account.connected` / `account.switched` / `account.disconnected` — no manual re-click needed after
+connecting, switching or disconnecting a Google account. The workspace panel's two sections
+(opportunities + top queries) fetch concurrently via `asyncio.gather`.
 
 ---
 
 ## Built with
 
-- [imperal-sdk](https://github.com/imperalcloud/imperal-sdk) 5.9.9
+- [imperal-sdk](https://github.com/imperalcloud/imperal-sdk) 5.9.12
 - [Imperal Cloud](https://panel.imperal.io)
