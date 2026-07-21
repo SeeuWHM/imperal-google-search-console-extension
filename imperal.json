@@ -2,7 +2,7 @@
   "manifest_schema_version": 3,
   "sdk_version": "5.9.12",
   "app_id": "google-search-console-connector",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "name": "Google Search Console",
   "description": "Connect your own Google account to see your Search Console properties and their real Google Search performance — top queries, impressions, clicks and average position, straight from Google.",
   "icon": "icon.svg",
@@ -552,7 +552,7 @@
       "title": "Search Console",
       "tree": {},
       "icon": "Search",
-      "refresh": "on_event:account.switched,account.disconnected",
+      "refresh": "on_event:account.connected,account.switched,account.disconnected",
       "center_overlay": false,
       "default_width": 260
     },
@@ -562,7 +562,7 @@
       "title": "Search Console",
       "tree": {},
       "icon": "Search",
-      "refresh": "manual",
+      "refresh": "on_event:account.switched,account.disconnected",
       "center_overlay": false
     }
   ]

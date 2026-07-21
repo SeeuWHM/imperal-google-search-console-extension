@@ -90,7 +90,7 @@ def _connect_panel(error: str = "") -> ui.UINode:
 
 @ext.panel("gsc_sidebar", slot="left", title="Search Console", icon="Search",
            default_width=260,
-           refresh="on_event:account.switched,account.disconnected")
+           refresh="on_event:account.connected,account.switched,account.disconnected")
 async def sidebar_panel(ctx, show_all: bool = False):
     if not await gsc_ready(ctx):
         return _connect_panel()

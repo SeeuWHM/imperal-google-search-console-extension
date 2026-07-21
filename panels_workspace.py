@@ -6,6 +6,8 @@ rankings). Opportunities first: striking-distance is the reason to open a site.
 """
 from __future__ import annotations
 
+import asyncio
+
 from imperal_sdk import ui
 
 from app import ext
@@ -70,15 +72,16 @@ async def _top_queries_section(ctx, site_url: str, q_limit: int = _Q_STEP) -> ui
     return ui.Stack(gap=1, children=children)
 
 
-@ext.panel("gsc_workspace", slot="center", title="Search Console", icon="Search")
+@ext.panel("gsc_workspace", slot="center", title="Search Console", icon="Search",
+           refresh="on_event:account.switched,account.disconnected")
 async def workspace_panel(ctx, site_url: str = "", q_limit: int = _Q_STEP):
     if not await gsc_ready(ctx):
         return ui.Empty(message="Connect your Google account first — run connect_gsc in chat.")
     if not site_url:
         return ui.Empty(message="Pick a site on the left to see its opportunities and top queries.")
 
-    opportunities, top = (
-        await _opportunities_section(ctx, site_url),
-        await _top_queries_section(ctx, site_url, q_limit),
+    opportunities, top = await asyncio.gather(
+        _opportunities_section(ctx, site_url),
+        _top_queries_section(ctx, site_url, q_limit),
     )
     return ui.Stack(children=[opportunities, ui.Divider(), top])
