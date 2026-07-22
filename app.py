@@ -14,8 +14,6 @@ import logging
 
 from imperal_sdk import Extension, ChatExtension
 
-from gsc_accounts import _all_accounts
-
 log = logging.getLogger("gsc_connector")
 
 ext = Extension(
@@ -95,8 +93,12 @@ ext.cache_model("gsc_payload")(CachedGscPayload)
 
 @ext.health_check
 async def health(ctx) -> dict:
-    accounts = await _all_accounts(ctx)
-    return {"status": "ok", "version": ext.version, "accounts_connected": len(accounts)}
+    # App-level probe, no user context - ctx.store is per-user and raises here
+    # (kernel I-HEALTH-CTX-HONEST). GSC has no backend microservice of its own
+    # (per-user Google OAuth straight to Google REST API - see module docstring
+    # above), so there is no documented liveness endpoint to probe via ctx.http
+    # either. Static liveness only, same pattern as mail-client/file-reader.
+    return {"status": "ok", "version": ext.version}
 
 
 @ext.on_install
